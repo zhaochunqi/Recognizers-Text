@@ -1,0 +1,31 @@
+name: dotnet package
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+      contents: read
+    strategy:
+      matrix:
+        folder:
+          - .NET/Microsoft.Recognizers.Text
+          - .NET/Microsoft.Recognizers.Text.Number
+          - .NET/Microsoft.Recognizers.Text.NumberWithUnit
+          - .NET/Microsoft.Recognizers.Definitions
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: "3.1.x"
+          source-url: https://nuget.pkg.github.com/zhaochunqi/index.json
+        env:
+          NUGET_AUTH_TOKEN: ${{secrets.GITHUB_TOKEN}}
+      - run: dotnet build --configuration Release ${{ matrix.folder }}
+      - name: Create packages
+        run: dotnet pack --configuration Release ${{ matrix.folder }}
+      - name: Publish the package to GPR
+        run: dotnet nuget push ${{ matrix.folder }}/bin/Release/*.nupkg
